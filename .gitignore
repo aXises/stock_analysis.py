@@ -1,3 +1,5 @@
 *.trp
 *.csv
 *.pyc
+*.iml
+*.xml
