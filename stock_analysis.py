@@ -2,40 +2,93 @@ import stocks
 
 Loader = stocks.Loader
 TradingData = stocks.TradingData
-StockDict = {}
+Stock = stocks.Stock
+all_stocks = stocks.StockCollection()
+volume = stocks.AverageVolume()
+
 
 class LoadCSV(Loader):
-
-    def __init__(self, filename, stocks):
-        super().__init__(filename, stocks)
 
     def _process(self, file):
         for data in file:
             datalist = data.split(",")
-            StockDict[datalist[0]] = TradingData(datalist[1],
-                                                 datalist[2],
-                                                 datalist[3],
-                                                 datalist[4],
-                                                 datalist[5],
-                                                 datalist[6])
-        return StockDict
+
+            stock = all_stocks.get_stock(datalist[0])
+            day_data = TradingData(str(datalist[1]),
+                                   float(datalist[2]),
+                                   float(datalist[3]),
+                                   float(datalist[4]),
+                                   float(datalist[5]),
+                                   int(datalist[6]))
+
+            stock.add_day_data(day_data)
 
 
 class LoadTriplet(Loader):
-    def __init__(self, filename, stocks):
-        super().__init__(filename, stocks)
 
     def _process(self, file):
+        datalist = []
+        datalist_split = []
+        stocklist = []
+        codelist = []
+        codelist_split = []
+        valuelist = []
+
         for data in file:
-            print(data)
-        return StockDict
+            datalist.append(data)
 
+        for x in range(0, len(datalist), 6):
+            datalist_split.append(datalist[x:x+6])
 
-"""Debug
-test = LoadTriplet('feb1.trp', stocks)
-#print(StockDict)
-print(StockDict['EDE'].get_date())
-test2 = TradingData(1,2,3,4,5,6)
-print(test2.get_date())
-#print(test._process('march1.csv'))
-"""
+        for data in datalist_split:
+            for string in data:
+                x = string.split(":")
+                valuelist.append(x[2])
+                codelist.append(x[0])
+
+        for x in range(0, len(valuelist), 6):
+            stocklist.append(valuelist[x:x+6])
+
+        for x in range(0, len(codelist), 6):
+            codelist_split.append(codelist[x:x+6])
+
+        c = 0
+        for x in codelist_split:
+            stocklist[c].append(x[0])
+            c += 1
+
+        for data in stocklist:
+            stock = all_stocks.get_stock(data[6])
+            day_data = TradingData(str(data[0]),
+                                   float(data[1]),
+                                   float(data[2]),
+                                   float(data[3]),
+                                   float(data[4]),
+                                   int(data[5]))
+            stock.add_day_data(day_data)
+
+#debug
+
+LoadCSV("data_files/march1.csv", all_stocks)
+LoadCSV("data_files/march2.csv", all_stocks)
+LoadCSV("data_files/march3.csv", all_stocks)
+LoadCSV("data_files/march4.csv", all_stocks)
+LoadTriplet("data_files/feb1.trp", all_stocks)
+LoadTriplet("data_files/feb2.trp", all_stocks)
+LoadTriplet("data_files/feb3.trp", all_stocks)
+LoadTriplet("data_files/feb4.trp", all_stocks)
+LoadTriplet("data_files/march5.trp", all_stocks)
+
+date = '20170227'
+code = "ADV"
+stock = all_stocks.get_stock(code)
+
+print(code, 'date is:', stock.get_day_data(date).get_date(), 'type is', type(stock.get_day_data(date).get_date()))
+print(code, 'open is:',stock.get_day_data(date).get_open(), 'type is', type(stock.get_day_data(date).get_open()))
+print(code, 'high is:',stock.get_day_data(date).get_high(), 'type is', type(stock.get_day_data(date).get_high()))
+print(code, 'low is:',stock.get_day_data(date).get_low(), 'type is', type(stock.get_day_data(date).get_low()))
+print(code, 'close is:',stock.get_day_data(date).get_close(), 'type is', type(stock.get_day_data(date).get_close()))
+print(code, 'volume is:',stock.get_day_data(date).get_volume(),'type is', type(stock.get_day_data(date).get_volume()))
+
+stock.analyse(volume)
+print("Average Volume of", code, "is", volume.result())
