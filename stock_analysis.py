@@ -5,7 +5,7 @@ TradingData = stocks.TradingData
 Stock = stocks.Stock
 Analyser = stocks.Analyser
 all_stocks = stocks.StockCollection()
-volume = stocks.AverageVolume()
+
 
 class LoadCSV(Loader):
 
@@ -22,7 +22,6 @@ class LoadCSV(Loader):
                                    int(datalist[6]))
 
             stock.add_day_data(day_data)
-
 
 class LoadTriplet(Loader):
 
@@ -89,14 +88,34 @@ class HighLow(Analyser):
 
 
 class MovingAverage(Analyser):
-    def __init__(self):
-        pass
 
+    def __init__(self, num_days):
+        self._num_days = num_days
+        self._closing = 0
+        self._closing_total = 0
+        self._data = []
+
+    def process(self, day):
+        self._closing = day.get_high()
+        self._date = day.get_date()
+        self._data.append(day.get_high())
+
+        if len(self._data) >= self._num_days:
+            while len(self._data) > self._num_days:
+                del self._data[0]
+                self._closing_total = sum(self._data)
+
+    def reset(self):
+        self._closing = 0
+        self._closing_total = 0
+        self._data = []
+
+    def result(self):
+        return self._closing_total / self._num_days
 
 class GapUp(Analyser):
     def __init__(self):
         pass
-
 
 LoadCSV("data_files/march1.csv", all_stocks)
 LoadCSV("data_files/march2.csv", all_stocks)
@@ -107,7 +126,26 @@ LoadTriplet("data_files/feb1.trp", all_stocks)
 LoadTriplet("data_files/feb2.trp", all_stocks)
 LoadTriplet("data_files/feb3.trp", all_stocks)
 LoadTriplet("data_files/feb4.trp", all_stocks)
-LoadTriplet("data_files/march5.trp", all_stocks)
+
+volume = stocks.AverageVolume()
+stock = all_stocks.get_stock("ADV")
+
+stock.analyse(volume)
+print("Average Volume of ADV is", volume.result())
+high_low = HighLow()
+stock.analyse(high_low)
+print("Highest & Lowest trading price of ADV is", high_low.result())
+moving_average = MovingAverage(10)
+stock.analyse(moving_average)
+print("Moving average of ADV over last 10 days is {0:.2f}"
+      .format(moving_average.result()))
+
+"""
+stocks_loaded = all_stocks._all_stocks.keys()
+print(stocks_loaded)
+print(len(stocks_loaded))
+print(all_stocks._all_stocks.get('ADV'))
+"""
 
 """
 #debug
@@ -117,17 +155,20 @@ print(code, 'high is:',stock.get_day_data(date).get_high(), 'type is', type(stoc
 print(code, 'low is:',stock.get_day_data(date).get_low(), 'type is', type(stock.get_day_data(date).get_low()))
 print(code, 'close is:',stock.get_day_data(date).get_close(), 'type is', type(stock.get_day_data(date).get_close()))
 print(code, 'volume is:',stock.get_day_data(date).get_volume(),'type is', type(stock.get_day_data(date).get_volume()))
-#stocks_loaded = all_stocks._all_stocks.keys()
-#print(stocks_loaded)
-#print(len(stocks_loaded))
 
-date = '20170227'
-code = "ADV"
-stock = all_stocks.get_stock(code)
 
 highlow = HighLow()
 stock.analyse(highlow)
 print("HighLow of", code, "is", highlow.result())
+
+date = '20170227'
+code = "ADV"
+
+stock = all_stocks.get_stock(code)
+
+movingaverage = MovingAverage(2)
+stock.analyse(movingaverage)
+print("Moving Average of", code, "is", movingaverage.result())
 
 #stock.analyse(volume)
 #print("Average Volume of", code, "is", volume.result())
