@@ -9,24 +9,48 @@ all_stocks = stocks.StockCollection()
 
 class LoadCSV(Loader):
 
+    def __init__(self, filename, stocks):
+        Loader.__init__(self, filename, stocks)
+        self._filename = filename
+        self.file_validate(self._filename)
+
     def _process(self, file):
         for data in file:
             datalist = data.split(",")
             if len(datalist) == 7 and len(datalist[0]) >= 3:
                 stock = all_stocks.get_stock(datalist[0])
-                day_data = TradingData(str(datalist[1]),
-                                       float(datalist[2]),
-                                       float(datalist[3]),
-                                       float(datalist[4]),
-                                       float(datalist[5]),
-                                       int(datalist[6]))
-
-                stock.add_day_data(day_data)
+                try:
+                    int(datalist[1])
+                    try:
+                        day_data = TradingData(str(datalist[1]),
+                                               float(datalist[2]),
+                                               float(datalist[3]),
+                                               float(datalist[4]),
+                                               float(datalist[5]),
+                                               int(datalist[6]))
+                    except ValueError:
+                        raise RuntimeError
+                    stock.add_day_data(day_data)
+                except ValueError:
+                    raise RuntimeError
             else:
                 raise RuntimeError
 
+    @staticmethod
+    def file_validate(filename):
+        extension = filename.split(".")
+        if extension[-1] != "csv":
+            raise RuntimeError
+        else:
+            pass
+
 
 class LoadTriplet(Loader):
+
+    def __init__(self, filename, stocks):
+        Loader.__init__(self, filename, stocks)
+        self._filename = filename
+        self.file_validate(self._filename)
 
     def _process(self, file):
         datalist = []
@@ -67,15 +91,30 @@ class LoadTriplet(Loader):
 
             for data in stocklist:
                 stock = all_stocks.get_stock(data[6])
-                day_data = TradingData(str(data[0]),
-                                       float(data[1]),
-                                       float(data[2]),
-                                       float(data[3]),
-                                       float(data[4]),
-                                       int(data[5]))
+                try:
+                    int(data[0])
+                    try:
+                        day_data = TradingData(str(data[0]),
+                                               float(data[1]),
+                                               float(data[2]),
+                                               float(data[3]),
+                                               float(data[4]),
+                                               int(data[5]))
+                    except ValueError:
+                        raise RuntimeError
+                except ValueError:
+                    raise RuntimeError
                 stock.add_day_data(day_data)
         else:
             raise RuntimeError
+
+    @staticmethod
+    def file_validate(filename):
+        extension = filename.split(".")
+        if extension[-1] != "trp":
+            raise RuntimeError
+        else:
+            pass
 
 
 class HighLow(Analyser):
@@ -106,7 +145,7 @@ class MovingAverage(Analyser):
         self._data = []
 
     def process(self, day):
-        self._data.append(day.get_high())
+        self._data.append(day.get_close())
 
         if len(self._data) >= self._num_days:
             while len(self._data) > self._num_days:
@@ -159,7 +198,7 @@ LoadTriplet("data_files/feb3.trp", all_stocks)
 LoadTriplet("data_files/feb4.trp", all_stocks)
 
 volume = stocks.AverageVolume()
-code = "1AD"
+code = "ADV"
 stock = all_stocks.get_stock(code)
 stock.analyse(volume)
 print("Average Volume of", code ,"is", volume.result())
@@ -168,8 +207,8 @@ stock.analyse(high_low)
 print("Highest & Lowest trading price of", code ,"is", high_low.result())
 moving_average = MovingAverage(4)
 stock.analyse(moving_average)
-print("Moving average of ", code ,"over last n days is {0:.2f}"
+print("Moving average of", code ,"over last 4 days is {0:.2f}"
       .format(moving_average.result()), moving_average.result())
 gap_up = GapUp(0.0009)
 stock.analyse(gap_up)
-print("Last gap up date of", code,"is", gap_up.result.get_date())
+print("Last gap up date of", code,"is", gap_up.result().get_date())
