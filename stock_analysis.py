@@ -134,7 +134,10 @@ class HighLow(Analyser):
     def result(self):
         self._total_high.sort()
         self._total_low.sort()
-        return self._total_high[-1], self._total_low[0]
+        try:
+            return self._total_high[-1], self._total_low[0]
+        except IndexError:
+            raise ValueError
 
 
 class MovingAverage(Analyser):
@@ -201,13 +204,13 @@ volume = stocks.AverageVolume()
 code = "ADV"
 stock = all_stocks.get_stock(code)
 stock.analyse(volume)
-print("Average Volume of", code ,"is", volume.result())
+print("Average Volume of", code, "is", volume.result())
 high_low = HighLow()
 stock.analyse(high_low)
-print("Highest & Lowest trading price of", code ,"is", high_low.result())
+print("Highest & Lowest trading price of", code, "is", high_low.result())
 moving_average = MovingAverage(4)
 stock.analyse(moving_average)
-print("Moving average of", code ,"over last 4 days is {0:.2f}"
+print("Moving average of", code, "over last 4 days is {0:.2f}"
       .format(moving_average.result()), moving_average.result())
 gap_up = GapUp(0.0009)
 stock.analyse(gap_up)
