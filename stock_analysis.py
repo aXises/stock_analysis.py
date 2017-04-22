@@ -149,7 +149,9 @@ class MovingAverage(Analyser):
 
     def process(self, day):
         self._data.append(day.get_close())
-
+        if self._num_days == 0:
+            raise ValueError
+        
         if len(self._data) >= self._num_days:
             while len(self._data) > self._num_days:
                 del self._data[0]
