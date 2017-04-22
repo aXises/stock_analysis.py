@@ -1,3 +1,11 @@
+"""This program will load stock data from the stock market and perform simple
+analysis on the data. 
+    
+    __author__ = Xinyi Li
+    student number = 4437855
+    __email__ = xinyi.li4@uqconnect.edu.au
+"""
+
 import stocks
 
 Loader = stocks.Loader
@@ -8,13 +16,34 @@ all_stocks = stocks.StockCollection()
 
 
 class LoadCSV(Loader):
+    """Subclass of stocks.Loader, handles the processing and loading of .csv 
+    files. LoadCSV also handle invalid data types/structures and exceptions from 
+    the data.
+    """
 
     def __init__(self, filename, stocks):
+        """Inherited parameters from stocks.Loader.
+        
+        Parameters:
+            filename (str): Name of the file from which to load data.
+            stocks (StockCollection): Collection of existing stock market 
+            data to which the new data will be added.
+        """
         Loader.__init__(self, filename, stocks)
         self._filename = filename
         self.file_validate(self._filename)
 
     def _process(self, file):
+        """Processes and extracts data from .csv files and determines whether
+        if the data is valid before adding the data to the appropriate 
+        stock object. 
+        
+        Parameters:
+            file (TextIOWrapper): Object of filename opened.
+            
+        Raises:
+            RuntimeError: If the data structure is invalid.
+        """
         for data in file:
             datalist = data.split(",")
             if len(datalist) == 7 and len(datalist[0]) >= 3:
@@ -38,6 +67,11 @@ class LoadCSV(Loader):
 
     @staticmethod
     def file_validate(filename):
+        """Validates whether if the file has the correct extension
+        
+        Raises:
+            RuntimeError: If the filename does not have the correct extension
+        """
         extension = filename.split(".")
         if extension[-1] != "csv":
             raise RuntimeError
@@ -46,13 +80,34 @@ class LoadCSV(Loader):
 
 
 class LoadTriplet(Loader):
+    """Subclass of stocks.Loader, handles the processing and loading of .trp 
+    files. LoadTriplet also handle invalid data types/structures and exceptions 
+    from the data.
+    """
 
     def __init__(self, filename, stocks):
+        """Inherited parameters from stocks.Loader.
+        
+        Parameters:
+            filename (str): Name of the file from which to load data.
+            stocks (StockCollection): Collection of existing stock market data
+                                      to which the new data will be added.
+        """
         Loader.__init__(self, filename, stocks)
         self._filename = filename
         self.file_validate(self._filename)
 
     def _process(self, file):
+        """Processes and extracts data from .trp files and determines whether
+        if the data is valid before adding the data to the appropriate 
+        stock object. 
+
+        Parameters:
+            file (TextIOWrapper): Object of filename opened.
+
+        Raises:
+            RuntimeError: If the data structure is invalid.
+        """
         datalist = []
         datalist_split = []
         stocklist = []
@@ -110,6 +165,11 @@ class LoadTriplet(Loader):
 
     @staticmethod
     def file_validate(filename):
+        """Validates whether if the file has the correct extension.
+
+        Raises:
+            RuntimeError: If the filename does not have the correct extension
+        """
         extension = filename.split(".")
         if extension[-1] != "trp":
             raise RuntimeError
@@ -118,22 +178,42 @@ class LoadTriplet(Loader):
 
 
 class HighLow(Analyser):
+    """Subclass of Analyser. Provides access to high low analysis of stock data
+    """
 
     def __init__(self):
+        """Initialise lists which will contain data for processing.
+        """
         self._total_high = []
         self._total_low = []
 
     def process(self, day):
+        """Retrieves and processes the data to analyse stock's highest and 
+        lowest trades.
+        
+        Parameters:
+            day (TradingData): Trading data for one stock on one day.
+        """
         self._total_high.append(day.get_high())
+        self._total_high.sort()
         self._total_low.append(day.get_low())
+        self._total_low.sort()
 
     def reset(self):
+        """Reset the analysis process in order to perform a new analysis."""
         self._total_high = []
         self._total_low = []
 
     def result(self):
-        self._total_high.sort()
-        self._total_low.sort()
+        """Returns the result of the high low analysis and checks for 
+        exception from the data.
+        
+        Returns:
+             tuple: Containing the highest trade and lowest trade of the stock.
+             
+        Raises:
+            ValueError: If an IndexError occurs while returning the results.
+        """
         try:
             return self._total_high[-1], self._total_low[0]
         except IndexError:
@@ -141,13 +221,33 @@ class HighLow(Analyser):
 
 
 class MovingAverage(Analyser):
+    """Subclass of Analyser. Provides access to moving average analysis of 
+       stock data
+    """
 
     def __init__(self, num_days):
+        """Initialise the variables and list which will contain data 
+        for processing.
+        
+        Parameters
+            num_days(int): The number of days over to process
+            
+        Preconditions
+            num_days > 0
+        """
         self._num_days = num_days
         self._closing_total = 0
         self._data = []
 
     def process(self, day):
+        """Retrieves and processes the data to analyse stock's moving average.
+
+        Parameters:
+            day (TradingData): Trading data for one stock on one day.
+        
+        Raises:
+            ValueError: If the parameter num_days is 0
+        """
         self._data.append(day.get_close())
         if self._num_days == 0:
             raise ValueError
@@ -158,22 +258,47 @@ class MovingAverage(Analyser):
                 self._closing_total = sum(self._data)
 
     def reset(self):
+        """Reset the analysis process in order to perform a new analysis."""
         self._closing_total = 0
         self._data = []
 
     def result(self):
+        """Returns the result of the moving average analysis
+        
+        Returns:
+            int: Moving average of the stock across the specified number of 
+            days.
+        """
         return self._closing_total / self._num_days
 
 
 class GapUp(Analyser):
-
+    """Subclass of Analyser. Provides access to gap up analysis of 
+       stock data
+    """
     def __init__(self, delta):
+        """Initialise the variables and lists which will contain data 
+        for processing.
+
+        Parameters
+            delta(int): Determine whether if the price difference is significant
+            or not.
+        """
         self._delta = delta
         self._opening = []
         self._closing = []
         self._date = 0
 
     def process(self, day):
+        """Retrieves and processes the data to analyse and determine the
+        stock's latest gap up date according to the delta value.
+
+        Parameters:
+            day (TradingData): Trading data for one stock on one day.
+
+        Raises:
+            ValueError: If the parameter num_days is 0
+        """
         self._opening.append(day.get_open())
         self._closing.append(day.get_close())
 
@@ -184,11 +309,18 @@ class GapUp(Analyser):
             self._date = None
 
     def reset(self):
+        """Reset the analysis process in order to perform a new analysis."""
         self._opening = []
         self._closing = []
         self._date = 0
 
     def result(self):
+        """Returns the result of the gap up analysis.
+        
+        Returns:
+            TradingData: The trading data object containing all trading data
+            of a particular day.
+        """
         return self._date
 
 
