@@ -36,7 +36,7 @@ class LoadCSV(Loader):
     def _process(self, file):
         """Processes and extracts data from .csv files and determines whether
         if the data is valid before adding the data to the appropriate 
-        stock object. 
+        stock object.
         
         Parameters:
             file (TextIOWrapper): Object of filename opened.
@@ -50,16 +50,13 @@ class LoadCSV(Loader):
                 stock = all_stocks.get_stock(datalist[0])
                 try:
                     int(datalist[1])
-                    try:
-                        day_data = TradingData(str(datalist[1]),
-                                               float(datalist[2]),
-                                               float(datalist[3]),
-                                               float(datalist[4]),
-                                               float(datalist[5]),
-                                               int(datalist[6]))
-                    except ValueError:
-                        raise RuntimeError
-                    stock.add_day_data(day_data)
+                    stock.add_day_data(TradingData(str(datalist[1]),
+                                                 float(datalist[2]),
+                                                 float(datalist[3]),
+                                                 float(datalist[4]),
+                                                 float(datalist[5]),
+                                                 int(datalist[6])))
+
                 except ValueError:
                     raise RuntimeError
             else:
@@ -67,7 +64,7 @@ class LoadCSV(Loader):
 
     @staticmethod
     def file_validate(filename):
-        """Validates whether if the file has the correct extension
+        """Validates whether if the file has the correct extension.
         
         Raises:
             RuntimeError: If the filename does not have the correct extension
@@ -126,9 +123,12 @@ class LoadTriplet(Loader):
             for data in datalist_split:
                 for string in data:
                     x = string.split(":")
-                    valuelist.append(x[2])
-                    codelist.append(x[0])
-
+                    try:
+                        valuelist.append(x[2])
+                        codelist.append(x[0])
+                    except IndexError:
+                        raise RuntimeError
+                            
             for code in codelist:
                 if len(code) < 3:
                     raise RuntimeError
@@ -148,18 +148,14 @@ class LoadTriplet(Loader):
                 stock = all_stocks.get_stock(data[6])
                 try:
                     int(data[0])
-                    try:
-                        day_data = TradingData(str(data[0]),
-                                               float(data[1]),
-                                               float(data[2]),
-                                               float(data[3]),
-                                               float(data[4]),
-                                               int(data[5]))
-                    except ValueError:
-                        raise RuntimeError
+                    stock.add_day_data(TradingData(str(data[0]),
+                                                 float(data[1]),
+                                                 float(data[2]),
+                                                 float(data[3]),
+                                                 float(data[4]),
+                                                 int(data[5])))
                 except ValueError:
                     raise RuntimeError
-                stock.add_day_data(day_data)
         else:
             raise RuntimeError
 
