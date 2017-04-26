@@ -2,7 +2,7 @@
 analysis on the data. 
     
     __author__ = Xinyi Li
-    student number = 4437855
+    student number = 
     __email__ = xinyi.li4@uqconnect.edu.au
 """
 
@@ -17,7 +17,7 @@ all_stocks = stocks.StockCollection()
 
 class LoadCSV(Loader):
     """Subclass of stocks.Loader, handles the processing and loading of .csv 
-    files. LoadCSV also handle invalid data types/structures and exceptions from 
+    files. LoadCSV also handles invalid data types/structures and exceptions from 
     the data.
     """
 
@@ -32,6 +32,7 @@ class LoadCSV(Loader):
         Loader.__init__(self, filename, stocks)
         self._filename = filename
         self.file_validate(self._filename)
+        self._stocks = stocks
 
     def _process(self, file):
         """Processes and extracts data from .csv files and determines whether
@@ -47,7 +48,7 @@ class LoadCSV(Loader):
         for data in file:
             datalist = data.split(",")
             if len(datalist) == 7 and len(datalist[0]) >= 3:
-                stock = all_stocks.get_stock(datalist[0])
+                stock = self._stocks.get_stock(datalist[0])
                 try:
                     int(datalist[1])
                     stock.add_day_data(TradingData(str(datalist[1]),
@@ -78,7 +79,7 @@ class LoadCSV(Loader):
 
 class LoadTriplet(Loader):
     """Subclass of stocks.Loader, handles the processing and loading of .trp 
-    files. LoadTriplet also handle invalid data types/structures and exceptions 
+    files. LoadTriplet also handles invalid data types/structures and exceptions 
     from the data.
     """
 
@@ -93,6 +94,7 @@ class LoadTriplet(Loader):
         Loader.__init__(self, filename, stocks)
         self._filename = filename
         self.file_validate(self._filename)
+        self._stocks = stocks
 
     def _process(self, file):
         """Processes and extracts data from .trp files and determines whether
@@ -145,7 +147,7 @@ class LoadTriplet(Loader):
                 c += 1
 
             for data in stocklist:
-                stock = all_stocks.get_stock(data[6])
+                stock = self._stocks.get_stock(data[6])
                 try:
                     int(data[0])
                     stock.add_day_data(TradingData(str(data[0]),
@@ -320,28 +322,33 @@ class GapUp(Analyser):
         return self._date
 
 
-LoadCSV("data_files/march1.csv", all_stocks)
-LoadCSV("data_files/march2.csv", all_stocks)
-LoadCSV("data_files/march3.csv", all_stocks)
-LoadCSV("data_files/march4.csv", all_stocks)
-LoadCSV("data_files/march5.csv", all_stocks)
-LoadTriplet("data_files/feb1.trp", all_stocks)
-LoadTriplet("data_files/feb2.trp", all_stocks)
-LoadTriplet("data_files/feb3.trp", all_stocks)
-LoadTriplet("data_files/feb4.trp", all_stocks)
+def example_usage () :
+    all_stocks = stocks.StockCollection()
+    LoadCSV("data_files/march1.csv", all_stocks)
+    LoadCSV("data_files/march2.csv", all_stocks)
+    LoadCSV("data_files/march3.csv", all_stocks)
+    LoadCSV("data_files/march4.csv", all_stocks)
+    LoadCSV("data_files/march5.csv", all_stocks)
+    LoadTriplet("data_files/feb1.trp", all_stocks)
+    LoadTriplet("data_files/feb2.trp", all_stocks)
+    LoadTriplet("data_files/feb3.trp", all_stocks)
+    LoadTriplet("data_files/feb4.trp", all_stocks)
+    volume = stocks.AverageVolume()
+    stock = all_stocks.get_stock("ADV")
+    stock.analyse(volume)
+    print("Average Volume of ADV is", volume.result())
+    high_low = HighLow()
+    stock.analyse(high_low)
+    print("Highest & Lowest trading price of ADV is", high_low.result())
+    moving_average = MovingAverage(10)
+    stock.analyse(moving_average)
+    print("Moving average of ADV over last 10 days is {0:.2f}"
+          .format(moving_average.result()))
+    gap_up = GapUp(0.011)
+    stock = all_stocks.get_stock("YOW")
+    stock.analyse(gap_up)
+    print("Last gap up date of YOW is", gap_up.result().get_date())
 
-volume = stocks.AverageVolume()
-code = "ADV"
-stock = all_stocks.get_stock(code)
-stock.analyse(volume)
-print("Average Volume of", code, "is", volume.result())
-high_low = HighLow()
-stock.analyse(high_low)
-print("Highest & Lowest trading price of", code, "is", high_low.result())
-moving_average = MovingAverage(4)
-stock.analyse(moving_average)
-print("Moving average of", code, "over last 4 days is {0:.2f}"
-      .format(moving_average.result()), moving_average.result())
-gap_up = GapUp(0.0009)
-stock.analyse(gap_up)
-print("Last gap up date of", code,"is", gap_up.result().get_date())
+    
+if __name__ == "__main__" :
+    example_usage()
