@@ -12,7 +12,6 @@ Loader = stocks.Loader
 TradingData = stocks.TradingData
 Stock = stocks.Stock
 Analyser = stocks.Analyser
-all_stocks = stocks.StockCollection()
 
 
 class LoadCSV(Loader):
@@ -29,16 +28,15 @@ class LoadCSV(Loader):
             stocks (StockCollection): Collection of existing stock market 
             data to which the new data will be added.
         """
-        Loader.__init__(self, filename, stocks)
-        self._filename = filename
-        self.file_validate(self._filename)
-        self._stocks = stocks
+        super().__init__(filename, stocks)
+        self._file_validate(filename)
+        
 
     def _process(self, file):
         """Processes and extracts data from .csv files and determines whether
         if the data is valid before adding the data to the appropriate 
         stock object.
-        
+       
         Parameters:
             file (TextIOWrapper): Object of filename opened.
             
@@ -64,7 +62,7 @@ class LoadCSV(Loader):
                 raise RuntimeError
 
     @staticmethod
-    def file_validate(filename):
+    def _file_validate(filename):
         """Validates whether if the file has the correct extension.
         
         Raises:
@@ -73,9 +71,7 @@ class LoadCSV(Loader):
         extension = filename.split(".")
         if extension[-1] != "csv":
             raise RuntimeError
-        else:
-            pass
-
+        
 
 class LoadTriplet(Loader):
     """Subclass of stocks.Loader, handles the processing and loading of .trp 
@@ -91,10 +87,9 @@ class LoadTriplet(Loader):
             stocks (StockCollection): Collection of existing stock market data
                                       to which the new data will be added.
         """
-        Loader.__init__(self, filename, stocks)
-        self._filename = filename
-        self.file_validate(self._filename)
-        self._stocks = stocks
+        super().__init__(filename, stocks)
+        self._file_validate(filename)
+        
 
     def _process(self, file):
         """Processes and extracts data from .trp files and determines whether
@@ -162,7 +157,7 @@ class LoadTriplet(Loader):
             raise RuntimeError
 
     @staticmethod
-    def file_validate(filename):
+    def _file_validate(filename):
         """Validates whether if the file has the correct extension.
 
         Raises:
@@ -171,8 +166,6 @@ class LoadTriplet(Loader):
         extension = filename.split(".")
         if extension[-1] != "trp":
             raise RuntimeError
-        else:
-            pass
 
 
 class HighLow(Analyser):
