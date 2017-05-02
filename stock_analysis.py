@@ -237,16 +237,17 @@ class MovingAverage(Analyser):
             day (TradingData): Trading data for one stock on one day.
         
         Raises:
-            ValueError: If the parameter num_days is 0
+            ValueError: If the parameter num_days is less or equal to 0
         """
         self._data.append(day.get_close())
-        if self._num_days == 0:
+        if self._num_days <= 0 or type(self._num_days) == float:
             raise ValueError
-        
+
         if len(self._data) >= self._num_days:
             while len(self._data) > self._num_days:
                 del self._data[0]
                 self._closing_total = sum(self._data)
+
 
     def reset(self):
         """Reset the analysis process in order to perform a new analysis."""
