@@ -42,13 +42,16 @@ class LoadCSV(Loader):
             
         Raises:
             RuntimeError: If the data structure is invalid.
+
+        Preconditions:
+            file must be a .csv file with the valid formatting
         """
         for data in file:
             datalist = data.split(",")
             if len(datalist) == 7 and len(datalist[0]) >= 3:
                 stock = self._stocks.get_stock(datalist[0])
                 try:
-                    int(datalist[1])
+                    int(datalist[1]) #check if date consists of integers
                     stock.add_day_data(TradingData(str(datalist[1]),
                                                  float(datalist[2]),
                                                  float(datalist[3]),
@@ -57,9 +60,9 @@ class LoadCSV(Loader):
                                                  int(datalist[6])))
 
                 except ValueError:
-                    raise RuntimeError
+                    raise RuntimeError ('invalid data format.')
             else:
-                raise RuntimeError
+                raise RuntimeError ('the file must be a .csv file.')
 
     @staticmethod
     def _file_validate(filename):
@@ -70,7 +73,7 @@ class LoadCSV(Loader):
         """
         extension = filename.split(".")
         if extension[-1] != "csv":
-            raise RuntimeError
+            raise RuntimeError ('the file must be a .csv file.')
         
 
 class LoadTriplet(Loader):
@@ -85,7 +88,13 @@ class LoadTriplet(Loader):
         Parameters:
             filename (str): Name of the file from which to load data.
             stocks (StockCollection): Collection of existing stock market data
+            
                                       to which the new data will be added.
+        Raises:
+            RuntimeError: If the data structure is invalid.
+
+        Preconditions:
+            file must be a .trp file with the valid formatting
         """
         super().__init__(filename, stocks)
         self._file_validate(filename)
@@ -124,11 +133,11 @@ class LoadTriplet(Loader):
                         valuelist.append(x[2])
                         codelist.append(x[0])
                     except IndexError:
-                        raise RuntimeError
+                        raise RuntimeError ('invalid data format.')
                             
             for code in codelist:
                 if len(code) < 3:
-                    raise RuntimeError
+                    raise RuntimeError ('invalid data format.')
 
             for x in range(0, len(valuelist), 6):
                 stocklist.append(valuelist[x:x+6])
@@ -144,7 +153,7 @@ class LoadTriplet(Loader):
             for data in stocklist:
                 stock = self._stocks.get_stock(data[6])
                 try:
-                    int(data[0])
+                    int(data[0]) #check if date consists of integers
                     stock.add_day_data(TradingData(str(data[0]),
                                                  float(data[1]),
                                                  float(data[2]),
@@ -152,9 +161,9 @@ class LoadTriplet(Loader):
                                                  float(data[4]),
                                                  int(data[5])))
                 except ValueError:
-                    raise RuntimeError
+                    raise RuntimeError ('invalid data format.')
         else:
-            raise RuntimeError
+            raise RuntimeError ('invalid data format.')
 
     @staticmethod
     def _file_validate(filename):
@@ -165,7 +174,7 @@ class LoadTriplet(Loader):
         """
         extension = filename.split(".")
         if extension[-1] != "trp":
-            raise RuntimeError
+            raise RuntimeError ('the file must be a .trp file')
 
 
 class HighLow(Analyser):
@@ -208,7 +217,7 @@ class HighLow(Analyser):
         try:
             return self._total_high[-1], self._total_low[0]
         except IndexError:
-            raise ValueError
+            raise ValueError ('this stock has no high or low.')
 
 
 class MovingAverage(Analyser):
@@ -223,8 +232,8 @@ class MovingAverage(Analyser):
         Parameters
             num_days(int): The number of days over to process
             
-        Preconditions
-            num_days > 0
+        Preconditions:
+            num_days must be a integer greater than 0
         """
         self._num_days = num_days
         self._closing_total = 0
@@ -240,14 +249,14 @@ class MovingAverage(Analyser):
             ValueError: If the parameter num_days is less or equal to 0
         """
         self._data.append(day.get_close())
+        
         if self._num_days <= 0 or type(self._num_days) == float:
-            raise ValueError
+            raise ValueError ('please enter valid day/s.')
 
         if len(self._data) >= self._num_days:
             while len(self._data) > self._num_days:
                 del self._data[0]
                 self._closing_total = sum(self._data)
-
 
     def reset(self):
         """Reset the analysis process in order to perform a new analysis."""
@@ -266,7 +275,7 @@ class MovingAverage(Analyser):
 
 class GapUp(Analyser):
     """Subclass of Analyser. Provides access to gap up analysis of 
-       stock data
+       stock data.
     """
     def __init__(self, delta):
         """Initialise the variables and lists which will contain data 
@@ -294,11 +303,14 @@ class GapUp(Analyser):
         self._opening.append(day.get_open())
         self._closing.append(day.get_close())
 
-        if len(self._closing) > 1:
-            if self._opening[-1] - self._closing[-2] > self._delta:
-                self._date = day
-        else:
-            self._date = None
+        try:
+            if len(self._closing) > 1:
+                if self._opening[-1] - self._closing[-2] > self._delta:
+                    self._date = day
+            else:
+                self._date = None
+        except TypeError:
+            raise ValueError ('please enter a valid delta value.')
 
     def reset(self):
         """Reset the analysis process in order to perform a new analysis."""
@@ -342,7 +354,6 @@ def example_usage () :
     stock = all_stocks.get_stock("YOW")
     stock.analyse(gap_up)
     print("Last gap up date of YOW is", gap_up.result().get_date())
-
     
 if __name__ == "__main__" :
     example_usage()
