@@ -256,7 +256,7 @@ class MovingAverage(Analyser):
         if len(self._data) >= self._num_days:
             while len(self._data) > self._num_days:
                 del self._data[0]
-                self._closing_total = sum(self._data)
+            self._closing_total = sum(self._data)
 
     def reset(self):
         """Reset the analysis process in order to perform a new analysis."""
