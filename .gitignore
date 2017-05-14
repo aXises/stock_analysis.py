@@ -4,3 +4,7 @@
 *.iml
 *.xml
 tests.py
+*.txt
+data_files/triplet_creator.py
+stock_analysis_solution.py
+testrunner.py
